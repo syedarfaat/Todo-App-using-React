@@ -1,5 +1,5 @@
 // Import required modules
-import React, { useReducer, useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { Button, Container, Form } from "react-bootstrap";
 import "./App.css";
 import Todos from "./Todos";
@@ -18,7 +18,7 @@ function reducer(todos, { payload, type }) {
       // Add a new todo item to the existing todos array
       return [
         ...todos,
-        { content: payload.newTodo, id: Date.now() }
+        { content: payload.newTodo, id: payload.id }
       ];
     case ACTIONS.DELETE_ONE:
       // Remove a single todo item based on its ID
@@ -31,14 +31,34 @@ function reducer(todos, { payload, type }) {
   }
 }
 
+
+
 function App() {
   // State variables using useState hook
   const [inputValue, setInputValue] = useState('');
   const [todos, dispatch] = useReducer(reducer, []);
 
+  //The following are two useEffect hooks used to store the todos in order to persist 
+  //through renders
+  useEffect(()=>{
+    //This useEffect will fetech the Previously added todos from the local storage 
+    //and add run the dispatch function to add those todos to the current todos list
+    const storedtodos=JSON.parse(localStorage.getItem('todos'))
+    storedtodos.map(stodo=>{
+      dispatch({ type: ACTIONS.ADD_TODO, payload: { newTodo: stodo.content, id:stodo.id } });
+    })
+  },[])
+
+
+  useEffect(()=>{
+    //A simple useEffect to make changes to the todos in local storage using the API,
+    // everytime there is a change.
+    localStorage.setItem('todos',JSON.stringify(todos))
+  },[todos])
+
   // Function to handle form submission
   const handleSubmit = () => {
-    dispatch({ type: ACTIONS.ADD_TODO, payload: { newTodo: inputValue } });
+    dispatch({ type: ACTIONS.ADD_TODO, payload: { newTodo: inputValue, id:Date.now() } });
   };
 
   return (
